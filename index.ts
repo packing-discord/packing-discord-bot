@@ -25,6 +25,7 @@ setInterval(() => savePing(), 5000);
 const client = new Client();
 
 client.on('ready', () => {
+    console.log(`Ready. Logged in as ${client.user?.username}`);
     terminateVoiceActivities();
     client.channels.cache.filter((channel) => channel.type === 'voice').forEach((channel) => {
         (channel as VoiceChannel).members.forEach((member) => {
