@@ -1,0 +1,15 @@
+{
+  "name": "packing-discord-bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Androz2091 <androz2091@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^12.5.1",
+    "dotenv": "^8.2.0",
+    "pg": "^8.5.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^7.14.11"
+  }
+}
