@@ -8,7 +8,8 @@ const pool = new Pool({
 
 const getCurrentDay = () => {
     const date = new Date();
-    return new Date(`${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}`).toISOString();
+    date.setHours(0, 0, 0, 0);
+    return date.toISOString();
 }
 
 export const startVoiceActivity = (userID: Snowflake, channelID: Snowflake) => {
