@@ -1,7 +1,7 @@
 {
   "name": "packing-discord-bot",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "author": "Androz2091 <androz2091@gmail.com>",
   "license": "MIT",
   "dependencies": {
