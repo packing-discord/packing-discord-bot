@@ -1,4 +1,8 @@
 import { config } from 'dotenv';
+
+// configure environment variables
+config();
+
 import {
 
     savePing,
@@ -16,9 +20,6 @@ import {
     // getMessagesLeaderboard
 } from './db';
 import { Client, VoiceChannel } from 'discord.js';
-
-// configure environment variables
-config();
 
 setInterval(() => savePing(), 5000);
 

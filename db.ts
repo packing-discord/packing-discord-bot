@@ -4,7 +4,9 @@ import { Pool } from 'pg';
 const pool = new Pool({
     user: process.env.PG_USER!,
     database: process.env.PG_DATABASE!,
-    password: process.env.PG_PASSWORD!
+    password: process.env.PG_PASSWORD!,
+    host: 'localhost',
+    port: 5432
 });
 
 const getCurrentDay = () => {
@@ -27,24 +29,30 @@ export const endVoiceActivity = (userID: Snowflake) => {
         SET end_date = $1
         WHERE user_id = $2
         AND end_date is null;
-    `, [userID]);
+    `, [new Date().toISOString(), userID]);
 }
 
 export const terminateVoiceActivities = async () => {
     const { rows } = await pool.query(`
-        SELECT last_ping FROM bot_statistics;
+        SELECT last_ping FROM public.bot_statistics;
     `);
-    const lastPing = rows[0].last_ping;
+    const lastPing = rows[0]?.last_ping;
+    if (!lastPing) {
+        return pool.query(`
+            DELETE FROM voice_activity
+            WHERE end_date is null;
+        `);
+    }
     return pool.query(`
         UPDATE voice_activity
         SET end_date = $1
-        WHERE end_date = $2;
+        WHERE end_date is null;
     `, lastPing);
 }
 
 export const savePing = () => {
     return pool.query(`
-        UPDATE bot_statistics
+        UPDATE public.bot_statistics
         SET last_ping = $1;
     `, [new Date().toISOString()]);
 }
@@ -59,7 +67,7 @@ export const addMessage = async (userID: Snowflake, channelID: Snowflake) => {
         await pool.query(`
             INSERT INTO message_activity
             (user_id, date, message_count, channels_ids) VALUES
-            ($1, $2, $3);
+            ($1, $2, $3, $4);
         `, [userID, getCurrentDay(), 1, [channelID]]);
     } else {
         const previousChannelsIDs = rows[0].channels_ids as Snowflake[];
