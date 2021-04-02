@@ -91,8 +91,18 @@ export const addScoreEvent = async (userID: Snowflake, modUserID: Snowflake, eve
     `, [userID, modUserID, eventDate.toISOString(), eventType]);
 }
 
-export const fetchUserScoreEvents = async (userID: Snowflake): Promise<unknown[]> => {
+export const fetchUserScoreEvents = (userID: Snowflake): Promise<unknown[]> => {
     return pool.query(`
         SELECT * FROM users_scores_events WHERE user_id = $1;
     `, [userID]).then(({ rows }) => rows);
-};
+}
+
+export const fetchVoiceActivityLeaderboard = (count: number = 10) => {
+    return pool.query(`
+        SELECT user_id, SUM ((CASE WHEN end_date IS null THEN now() ELSE end_date END) - start_date) as total_time
+        FROM voice_activity
+        WHERE start_date > current_date - interval '7 days' OR end_date is null
+        GROUP BY 1
+        ORDER BY 2 DESC
+    `).then(({ rows }) => (rows.length > count ? rows.splice(0, count) : rows));
+}

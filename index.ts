@@ -16,12 +16,13 @@ import {
     addMessage,
 
     // getWinLeaderboard,
-    // getVoiceLeaderboard,
+    fetchVoiceActivityLeaderboard,
     // getMessagesLeaderboard
 } from './db';
-import { Client, VoiceChannel, WSEventType } from 'discord.js';
+import { Client, MessageEmbed, TextChannel, VoiceChannel, WSEventType } from 'discord.js';
 import { SlashCreator, GatewayServer } from 'slash-create';
 import { join } from 'path';
+import { formatVoiceActivityLeaderboard } from './leaderboards';
 
 const client = new Client();
 
@@ -41,6 +42,23 @@ creator
 
 setInterval(() => savePing(), 5000);
 
+const updateActivityLeaderboard = async () => {
+    const activityLeaderboardChannel = client.channels.cache.get(process.env.LEADERBOARD_ACTIVITY_ID!) as TextChannel;
+    const messages = await activityLeaderboardChannel.messages.fetch();
+
+    const formattedVoiceActivityLeaderboard = await formatVoiceActivityLeaderboard(client);
+    const newVoiceEmbed = new MessageEmbed()
+        .setTitle('🔊 Voice activity leaderboard 🏆')
+        .addField('Top 10 (7 days)', formattedVoiceActivityLeaderboard.map((entry, idx) => `#${++idx} **${entry.user.username}** (${entry.time})`))
+        .setFooter('Join a voice channel to appear in the leaderboard!')
+        .setColor('#FF0000');
+
+    await Promise.all(messages.map((message) => message.delete()));
+
+    activityLeaderboardChannel.send(newVoiceEmbed);
+
+};
+
 client.on('ready', () => {
     console.log(`Ready. Logged in as ${client.user?.username}`);
     terminateVoiceActivities();
@@ -49,6 +67,8 @@ client.on('ready', () => {
             startVoiceActivity(member.user.id, channel.id);
         });
     });
+    updateActivityLeaderboard();
+    setInterval(() => updateActivityLeaderboard(), 1000 * 60 * 5);
 });
 
 client.on('voiceStateUpdate', async (oldState, newState) => {
