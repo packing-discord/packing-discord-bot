@@ -1,7 +1,7 @@
 import { Snowflake } from 'discord.js';
 import { addScoreEvent } from '../db';
 import { CommandContext, SlashCommand, SlashCreator } from 'slash-create'
-import client from '../';
+import client, { updateWinsLeaderboard } from '../';
 
 export default class extends SlashCommand {
     constructor(creator: SlashCreator) {
@@ -32,7 +32,8 @@ export default class extends SlashCommand {
             });
             return;
         };
-        addScoreEvent(userID, ctx.member.id, new Date(), 'loss');
         ctx.send('Loss added successfully!');
+        await addScoreEvent(userID, ctx.member.id, new Date(), 'loss');
+        updateWinsLeaderboard();
     }
 }

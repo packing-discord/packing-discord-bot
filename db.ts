@@ -116,3 +116,15 @@ export const fetchMessageActivityLeaderboard = (count: number = 10) => {
         ORDER BY 2 DESC
     `).then(({ rows }) => (rows.length > count ? rows.splice(0, count) : rows));
 }
+
+export const fetchScoreLeaderboard = (count: number = 10) => {
+    return pool.query(`
+        SELECT user_id,
+            sum(CASE WHEN event_type = 'loss' THEN 1 ELSE 0 END) as losses,
+            sum(CASE WHEN event_type = 'win' THEN 1 ELSE 0 END) as wins,
+            sum(CASE WHEN event_type = 'loss' THEN -1 WHEN event_type = 'win' THEN 1 END) as total
+        FROM users_scores_events
+        GROUP BY 1
+        ORDER BY 2 DESC
+    `).then(({ rows }) => (rows.length > count ? rows.splice(0, count) : rows));
+}

@@ -1,5 +1,5 @@
 import { Client, User } from 'discord.js';
-import { fetchMessageActivityLeaderboard, fetchVoiceActivityLeaderboard } from './db';
+import { fetchMessageActivityLeaderboard, fetchScoreLeaderboard, fetchVoiceActivityLeaderboard } from './db';
 import humanizeDuration from 'humanize-duration';
 
 interface VoiceActivityLeaderboardEntry {
@@ -10,6 +10,13 @@ interface VoiceActivityLeaderboardEntry {
 interface MessageActivityLeaderboardEntry {
     user: User;
     count: number;
+}
+
+interface ScoreLeaderboardEntry {
+    user: User;
+    total: number;
+    wins: number;
+    losses: number;
 }
 
 export const formatVoiceActivityLeaderboard = async (client: Client): Promise<VoiceActivityLeaderboardEntry[]> => {
@@ -49,4 +56,23 @@ export const formatMessageActivityLeaderboard = async (client: Client): Promise<
         });
     }));
     return messageLeaderboardEntries;
+}
+
+export const formatScoreLeaderboard = async (client: Client): Promise<ScoreLeaderboardEntry[]> => {
+    const scoreLeaderboard = await fetchScoreLeaderboard();
+    const scoreLeaderboardEntries: ScoreLeaderboardEntry[] = [];
+    await Promise.all(scoreLeaderboard.map((entry) => {
+        return new Promise<void>(async (resolve) => {
+            const user = client.users.cache.get(entry.user_id) || await client.users.fetch(entry.user_id).catch(() => {});
+            if (!user) resolve();
+            scoreLeaderboardEntries.push({
+                user: user as User,
+                total: entry.total,
+                losses: entry.losses,
+                wins: entry.wins
+            });
+            resolve();
+        });
+    }));
+    return scoreLeaderboardEntries; 
 }

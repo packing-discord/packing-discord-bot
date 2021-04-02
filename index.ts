@@ -22,7 +22,7 @@ import {
 import { Client, MessageEmbed, TextChannel, VoiceChannel, WSEventType } from 'discord.js';
 import { SlashCreator, GatewayServer } from 'slash-create';
 import { join } from 'path';
-import { formatMessageActivityLeaderboard, formatVoiceActivityLeaderboard } from './leaderboards';
+import { formatMessageActivityLeaderboard, formatScoreLeaderboard, formatVoiceActivityLeaderboard } from './leaderboards';
 
 const client = new Client();
 
@@ -77,6 +77,24 @@ const updateActivityLeaderboard = async () => {
 
 };
 
+export const updateWinsLeaderboard = async () => {
+    const scoreLeaderboardChannel = client.channels.cache.get(process.env.LEADERBOARD_SCORES_ID!) as TextChannel;
+    const messages = await scoreLeaderboardChannel.messages.fetch();
+
+    const scoreEmbedFooter = 'Play to increase your score!';
+    const scoreEmbed = messages.find((message) => message.embeds[0]?.footer?.text === scoreEmbedFooter);
+
+    const formattedVoiceActivityLeaderboard = await formatScoreLeaderboard(client);
+    const newScoreEmbed = new MessageEmbed()
+        .setTitle('🔊 Voice activity leaderboard 🏆')
+        .addField('Top 10 (7 days)', '\u200B\n'+formattedVoiceActivityLeaderboard.map((entry, idx) => `#${++idx} **${entry.user.username}** - Score: **${entry.total}**`).join('\n'))
+        .setFooter(scoreEmbedFooter)
+        .setColor('#FF0000');
+
+    if (!scoreEmbed) scoreLeaderboardChannel.send(newScoreEmbed);
+    else scoreEmbed.edit({ embed: newScoreEmbed });
+};
+
 client.on('ready', () => {
     console.log(`Ready. Logged in as ${client.user?.username}`);
     terminateVoiceActivities();
@@ -87,6 +105,7 @@ client.on('ready', () => {
     });
     updateActivityLeaderboard();
     setInterval(() => updateActivityLeaderboard(), 10000);
+    setInterval(() => updateWinsLeaderboard(), 10000);
 });
 
 client.on('voiceStateUpdate', async (oldState, newState) => {
