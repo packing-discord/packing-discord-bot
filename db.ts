@@ -9,6 +9,8 @@ const pool = new Pool({
     port: 5432
 });
 
+type ScoreEventType = 'win' | 'loss';
+
 const getCurrentDay = () => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
@@ -34,7 +36,7 @@ export const endVoiceActivity = (userID: Snowflake) => {
 
 export const terminateVoiceActivities = async () => {
     const { rows } = await pool.query(`
-        SELECT last_ping FROM public.bot_statistics;
+        SELECT last_ping FROM bot_statistics;
     `);
     const lastPing = rows[0]?.last_ping;
     if (!lastPing) {
@@ -52,7 +54,7 @@ export const terminateVoiceActivities = async () => {
 
 export const savePing = () => {
     return pool.query(`
-        UPDATE public.bot_statistics
+        UPDATE bot_statistics
         SET last_ping = $1;
     `, [new Date().toISOString()]);
 }
@@ -79,4 +81,12 @@ export const addMessage = async (userID: Snowflake, channelID: Snowflake) => {
             AND date = $3;
         `, [previousChannelsIDs.includes(channelID) ? previousChannelsIDs : [...previousChannelsIDs, channelID], userID, getCurrentDay()]);
     }
+}
+
+export const addScoreEvent = async (userID: Snowflake, modUserID: Snowflake, eventDate: Date, eventType: ScoreEventType): Promise<void> => {
+    await pool.query(`
+        INSERT INTO users_scores_events
+        (user_id, mod_user_id, event_date, event_type) VALUES
+        ($1, $2, $3, $4);
+    `, [userID, modUserID, eventDate, eventType]);
 }

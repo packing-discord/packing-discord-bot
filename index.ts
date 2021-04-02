@@ -19,11 +19,27 @@ import {
     // getVoiceLeaderboard,
     // getMessagesLeaderboard
 } from './db';
-import { Client, VoiceChannel } from 'discord.js';
-
-setInterval(() => savePing(), 5000);
+import { Client, VoiceChannel, WSEventType } from 'discord.js';
+import { SlashCreator, GatewayServer } from 'slash-create';
+import { join } from 'path';
 
 const client = new Client();
+
+const creator = new SlashCreator({
+    applicationID: process.env.APP_ID!,
+    token: process.env.TOKEN!
+});
+  
+creator
+.withServer(
+    new GatewayServer(
+        (handler) => client.ws.on('INTERACTION_CREATE' as WSEventType, handler)
+    )
+)
+.registerCommandsIn(join(__dirname, 'commands'))
+.syncCommands();
+
+setInterval(() => savePing(), 5000);
 
 client.on('ready', () => {
     console.log(`Ready. Logged in as ${client.user?.username}`);
@@ -62,3 +78,5 @@ client.on('message', (message) => {
 });
 
 client.login(process.env.TOKEN!);
+
+export default client;
