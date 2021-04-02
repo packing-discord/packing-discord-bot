@@ -13,11 +13,9 @@ interface MessageActivityLeaderboardEntry {
 }
 
 export const formatVoiceActivityLeaderboard = async (client: Client): Promise<VoiceActivityLeaderboardEntry[]> => {
-    /* Voice activity leaderboard */
     const voiceLeaderboard = await fetchVoiceActivityLeaderboard();
     const voiceLeaderboardEntries: VoiceActivityLeaderboardEntry[] = [];
     await Promise.all(voiceLeaderboard.map((entry) => {
-        console.log(entry)
         return new Promise<void>(async (resolve) => {
             const user = client.users.cache.get(entry.user_id) || await client.users.fetch(entry.user_id).catch(() => {});
             if (!user) resolve();
@@ -40,7 +38,6 @@ export const formatMessageActivityLeaderboard = async (client: Client): Promise<
     const messageLeaderboard = await fetchMessageActivityLeaderboard();
     const messageLeaderboardEntries: MessageActivityLeaderboardEntry[] = [];
     await Promise.all(messageLeaderboard.map((entry) => {
-        console.log(entry)
         return new Promise<void>(async (resolve) => {
             const user = client.users.cache.get(entry.user_id) || await client.users.fetch(entry.user_id).catch(() => {});
             if (!user) resolve();
