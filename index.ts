@@ -49,7 +49,7 @@ const updateActivityLeaderboard = async () => {
     const formattedVoiceActivityLeaderboard = await formatVoiceActivityLeaderboard(client);
     const newVoiceEmbed = new MessageEmbed()
         .setTitle('🔊 Voice activity leaderboard 🏆')
-        .addField('Top 10 (7 days)', formattedVoiceActivityLeaderboard.map((entry, idx) => `#${++idx} **${entry.user.username}** (${entry.time})`))
+        .addField('Top 10 (7 days)', '\u200B\n'+formattedVoiceActivityLeaderboard.map((entry, idx) => `#${++idx} **${entry.user.username}** (${entry.time})`).join('\n'))
         .setFooter('Join a voice channel to appear in the leaderboard!')
         .setColor('#FF0000');
 
