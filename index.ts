@@ -37,7 +37,7 @@ creator
     )
 )
 .registerCommandsIn(join(__dirname, 'commands'))
-.syncCommands();
+.syncCommandsIn(process.env.GUILD_ID!);
 
 setInterval(() => savePing(), 5000);
 

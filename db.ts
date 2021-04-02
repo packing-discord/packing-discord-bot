@@ -88,5 +88,11 @@ export const addScoreEvent = async (userID: Snowflake, modUserID: Snowflake, eve
         INSERT INTO users_scores_events
         (user_id, mod_user_id, event_date, event_type) VALUES
         ($1, $2, $3, $4);
-    `, [userID, modUserID, eventDate, eventType]);
+    `, [userID, modUserID, eventDate.toISOString(), eventType]);
 }
+
+export const fetchUserScoreEvents = async (userID: Snowflake): Promise<unknown[]> => {
+    return pool.query(`
+        SELECT * FROM users_scores_events WHERE user_id = $1;
+    `, [userID]).then(({ rows }) => rows);
+};

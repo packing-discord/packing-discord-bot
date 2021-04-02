@@ -12,16 +12,18 @@ export default class extends SlashCommand {
                 {
                     type: 6,
                     name: 'user',
-                    description: 'The user you want to add the win to'
+                    description: 'The user you want to add the win to',
+                    required: true
                 }
-            ]
+            ],
+            guildIDs: [process.env.GUILD_ID!]
         });
         this.filePath = __filename;
     }
 
     async run(ctx: CommandContext) {
         if (!ctx.guildID || !ctx.member) return;
-        const userID = ctx.options.userID as Snowflake;
+        const userID = ctx.options.user as Snowflake;
         const guild = client.guilds.cache.get(ctx.guildID)!;
         const member = guild.members.cache.get(ctx.member.id) || await guild.members.fetch(ctx.member.id).catch(() => {});
         if (!member || !member.permissions.has('MANAGE_MESSAGES')) {
@@ -31,5 +33,6 @@ export default class extends SlashCommand {
             return;
         };
         addScoreEvent(userID, ctx.member.id, new Date(), 'win');
+        ctx.send('Win added successfully!');
     }
 }
