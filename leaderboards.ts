@@ -1,5 +1,5 @@
 import { Client, User } from 'discord.js';
-import { fetchVoiceActivityLeaderboard } from './db';
+import { fetchMessageActivityLeaderboard, fetchVoiceActivityLeaderboard } from './db';
 import humanizeDuration from 'humanize-duration';
 
 interface VoiceActivityLeaderboardEntry {
@@ -7,8 +7,9 @@ interface VoiceActivityLeaderboardEntry {
     time: string;
 }
 
-const formatInterval = (t: number) => {
-    return (t/86400)+'d '+(new Date(t%86400*1000)).toUTCString().replace(/.*(\d{2}):(\d{2}):(\d{2}).*/, "$1h $2m $3s");
+interface MessageActivityLeaderboardEntry {
+    user: User;
+    count: number;
 }
 
 export const formatVoiceActivityLeaderboard = async (client: Client): Promise<VoiceActivityLeaderboardEntry[]> => {
@@ -33,4 +34,22 @@ export const formatVoiceActivityLeaderboard = async (client: Client): Promise<Vo
         });
     }));
     return voiceLeaderboardEntries;
-};
+}
+
+export const formatMessageActivityLeaderboard = async (client: Client): Promise<MessageActivityLeaderboardEntry[]> => {
+    const messageLeaderboard = await fetchMessageActivityLeaderboard();
+    const messageLeaderboardEntries: MessageActivityLeaderboardEntry[] = [];
+    await Promise.all(messageLeaderboard.map((entry) => {
+        console.log(entry)
+        return new Promise<void>(async (resolve) => {
+            const user = client.users.cache.get(entry.user_id) || await client.users.fetch(entry.user_id).catch(() => {});
+            if (!user) resolve();
+            messageLeaderboardEntries.push({
+                user: user as User,
+                count: entry.total_sent
+            });
+            resolve();
+        });
+    }));
+    return messageLeaderboardEntries;
+}

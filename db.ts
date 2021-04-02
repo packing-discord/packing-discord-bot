@@ -106,3 +106,13 @@ export const fetchVoiceActivityLeaderboard = (count: number = 10) => {
         ORDER BY 2 DESC
     `).then(({ rows }) => (rows.length > count ? rows.splice(0, count) : rows));
 }
+
+export const fetchMessageActivityLeaderboard = (count: number = 10) => {
+    return pool.query(`
+        SELECT user_id, SUM (message_count) as total_sent
+        FROM message_activity
+        WHERE date > current_date - interval '7 days'
+        GROUP BY 1
+        ORDER BY 2 DESC
+    `).then(({ rows }) => (rows.length > count ? rows.splice(0, count) : rows));
+}
