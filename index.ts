@@ -86,8 +86,8 @@ export const updateWinsLeaderboard = async () => {
 
     const formattedVoiceActivityLeaderboard = await formatScoreLeaderboard(client);
     const newScoreEmbed = new MessageEmbed()
-        .setTitle('🔊 Voice activity leaderboard 🏆')
-        .addField('Top 10 (7 days)', '\u200B\n'+formattedVoiceActivityLeaderboard.map((entry, idx) => `#${++idx} **${entry.user.username}** - Score: **${entry.total}**`).join('\n'))
+        .setTitle('🎤 Packing leaderboard 🏆')
+        .addField('Top 10 (lifetime)', '\u200B\n'+formattedVoiceActivityLeaderboard.map((entry, idx) => `#${++idx} **${entry.user.username}** - Score: **${entry.total}** (${entry.wins} wins / ${entry.losses} losses)`).join('\n'))
         .setFooter(scoreEmbedFooter)
         .setColor('#FF0000');
 
@@ -104,6 +104,7 @@ client.on('ready', () => {
         });
     });
     updateActivityLeaderboard();
+    updateWinsLeaderboard();
     setInterval(() => updateActivityLeaderboard(), 10000);
     setInterval(() => updateWinsLeaderboard(), 10000);
 });
