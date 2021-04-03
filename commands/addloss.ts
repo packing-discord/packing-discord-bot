@@ -26,7 +26,7 @@ export default class extends SlashCommand {
         const userID = ctx.options.user as Snowflake;
         const guild = client.guilds.cache.get(ctx.guildID)!;
         const member = guild.members.cache.get(ctx.member.id) || await guild.members.fetch(ctx.member.id).catch(() => {});
-        if (!member || !member.permissions.has('MANAGE_MESSAGES')) {
+        if (!member || !member.roles.cache.has(process.env.MOD_PLUS_ID!)) {
             ctx.send('The command was not able to verify your permissions... Please retry!', {
                 ephemeral: true
             });
