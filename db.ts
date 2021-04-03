@@ -104,7 +104,8 @@ export const fetchVoiceActivityLeaderboard = (count: number = 10) => {
         WHERE start_date > current_date - interval '7 days' OR end_date is null
         GROUP BY 1
         ORDER BY 2 DESC
-    `).then(({ rows }) => (rows.length > count ? rows.splice(0, count) : rows));
+        LIMIT $1;
+    `, [count]).then(({ rows }) => rows);
 }
 
 export const fetchMessageActivityLeaderboard = (count: number = 10) => {
@@ -114,7 +115,8 @@ export const fetchMessageActivityLeaderboard = (count: number = 10) => {
         WHERE date > current_date - interval '7 days'
         GROUP BY 1
         ORDER BY 2 DESC
-    `).then(({ rows }) => (rows.length > count ? rows.splice(0, count) : rows));
+        LIMIT $1;
+    `, [count]).then(({ rows }) => rows);
 }
 
 export const fetchScoreLeaderboard = (count: number = 10) => {
@@ -126,5 +128,6 @@ export const fetchScoreLeaderboard = (count: number = 10) => {
         FROM users_scores_events
         GROUP BY 1
         ORDER BY 2 DESC
-    `).then(({ rows }) => (rows.length > count ? rows.splice(0, count) : rows));
+        LIMIT $1;
+    `, [count]).then(({ rows }) => rows);
 }
