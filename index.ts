@@ -3,6 +3,8 @@ import { config } from 'dotenv';
 // configure environment variables
 config();
 
+import './api';
+
 import {
 
     savePing,

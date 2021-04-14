@@ -131,3 +131,25 @@ export const fetchScoreLeaderboard = (count: number = 10) => {
         LIMIT $1;
     `, [count]).then(({ rows }) => rows);
 }
+
+export const fetchUserScore = async (userID: string) => {
+    const { rows: [scoreRows] } = await pool.query(`
+        SELECT user_id,
+            sum(CASE WHEN event_type = 'loss' THEN -1 WHEN event_type = 'win' THEN 1 END) as total,
+            sum(CASE WHEN event_type = 'loss' THEN 1 ELSE 0 END) as losses,
+            sum(CASE WHEN event_type = 'win' THEN 1 ELSE 0 END) as wins
+        FROM users_scores_events
+        WHERE user_id = $1
+        GROUP BY 1;
+    `, [userID]);
+
+    const { rows: [pointRows] } = await pool.query(`
+        SELECT user_id, sum(nb_points) as points FROM points_expenditures WHERE user_id = $1 GROUP BY 1
+    `, [userID]);
+
+    return {
+        wins: scoreRows.wins as number,
+        losses: scoreRows.losses as number,
+        points: pointRows.points as number
+    };
+};
