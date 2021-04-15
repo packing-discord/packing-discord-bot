@@ -1,6 +1,22 @@
 import express from 'express';
 import { fetchUserScore } from './db';
 import { sign } from './jwt';
+import fetch from 'node-fetch';
+import btoa from 'btoa';
+import cors from 'cors';
+import jwt from 'express-jwt';
+
+declare global {
+    interface ParsedToken {
+        userID: string;
+    }
+  
+    namespace Express {
+        interface Request {
+            auth?: ParsedToken
+        }
+    }
+}
 
 const app = express();
 const port = process.env.API_PORT;
@@ -9,6 +25,15 @@ interface LoginResponse {
     userData: any|null;
     scoreData: any|null;
 };
+
+app.use(cors());
+
+app.get('/score', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: ['HS256'], requestProperty: 'auth' }), async (req, res) => {
+    const userID = req.auth?.userID as string;
+    const score = await fetchUserScore(userID);
+    console.log(score)
+    res.send(score);
+});
 
 app.get('/auth/login', async (req, res) => {
 
@@ -63,5 +88,5 @@ app.get('/auth/login', async (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`server is listening on ${port}`);
+    console.log(`API is listening on ${port}`);
 });
