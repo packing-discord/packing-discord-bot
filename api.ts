@@ -93,8 +93,14 @@ app.post('/buy', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: [
 
     const user = await client.users.fetch(userID);
     const embed = new MessageEmbed()
-        .setAuthor(user.username, user.displayAvatarURL())
-        .setDescription(`Current points: ${score.points}. Points used: ${product.points} ($${product.paypal} will be sent)`)
+        .setAuthor(user.tag, user.displayAvatarURL())
+        .setDescription(`A new payment is pending your approval ✅`)
+        .addField('User ID', userID)
+        .addField('User email', emailAddress)
+        .addField('User points', score.points)
+        .addField('Product price', product?.paypal)
+        .addField('Points paid by the user', product.points)
+        .addField('Status', 'Processing... (react to approve)')
         .setColor('RED');
     (client.channels.cache.get(process.env.TRANSACTION_CHANNEL!)! as TextChannel).send(embed).then((m) => {
         m.react('✅');
