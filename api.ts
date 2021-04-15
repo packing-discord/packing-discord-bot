@@ -1,5 +1,5 @@
 import express from 'express';
-import { buyProduct, fetchUserScore } from './db';
+import { buyProduct, fetchExpendituresHistory, fetchUserScore } from './db';
 import { sign } from './jwt';
 import fetch from 'node-fetch';
 import btoa from 'btoa';
@@ -25,6 +25,7 @@ const port = process.env.API_PORT;
 interface LoginResponse {
     userData: any|null;
     scoreData: any|null;
+    history: any|null;
     products: any;
 };
 
@@ -35,8 +36,10 @@ app.use(express.urlencoded({ extended: false }));
 app.get('/update', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: ['HS256'], requestProperty: 'auth' }), async (req, res) => {
     const userID = req.auth?.userID as string;
     const score = await fetchUserScore(userID);
+    const history = await fetchExpendituresHistory(userID);
     res.send({
         scoreData: score,
+        history,
         products
     });
 });
@@ -91,6 +94,16 @@ app.post('/buy', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: [
 
 });
 
+app.get('/history', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: ['HS256'], requestProperty: 'auth' }), async (req, res) => {
+    const userID = req.auth?.userID!;
+
+    fetchExpendituresHistory(userID).then((history) => {
+        res.send({
+            data: history
+        });
+    });
+});
+
 app.get('/auth/login', async (req, res) => {
 
     console.log('Login request received with code ', req.query.code);
@@ -103,6 +116,7 @@ app.get('/auth/login', async (req, res) => {
     const response: LoginResponse = {
         userData: null,
         scoreData: null,
+        history: null,
         products
     };
 
@@ -139,6 +153,7 @@ app.get('/auth/login', async (req, res) => {
     };
 
     response.scoreData = await fetchUserScore(userData.id);
+    response.history = await fetchExpendituresHistory(userData.id);
 
     console.log('Login request responded');
     return res.send({

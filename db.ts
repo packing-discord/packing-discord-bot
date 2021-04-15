@@ -190,3 +190,10 @@ export const buyProduct = async (userID: string, productID: number, createdAt: s
         });
     });
 };
+
+export const fetchExpendituresHistory = async (userID: string) => {
+    return pool.query(`
+        SELECT * FROM points_expenditures
+        WHERE user_id = $1;
+    `, [userID]).then(({ rows }) => rows);
+};
