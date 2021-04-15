@@ -58,6 +58,13 @@ app.post('/buy', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: [
             error: true
         });
     }
+    if (!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(emailAddress)) {
+        return res.send({
+            error: true,
+            message: 'Invalid email address'
+        })
+    }
+
     const product = products.find((product) => product.id === productID);
 
     if (!product) {

@@ -180,12 +180,13 @@ export const buyProduct = async (userID: string, productID: number, createdAt: s
         console.log(userID)
         pool.query(`
             INSERT INTO points_expenditures
-            (user_id, nb_points, product_id, created_at, approved, paid, email_address) VALUES
+            (user_id, nb_points, product_id, created_at, paid_at, paid, email_address) VALUES
             ($1, $2, $3, $4, $5, $6, $7)
             RETURNING id;
-        `, [userID, numberOfPoints, productID, createdAt, false, false, emailAddress]).then(({ rows }) => {
+        `, [userID, numberOfPoints, productID, createdAt, null, false, emailAddress]).then(({ rows }) => {
             resolve(rows[0].id);
         }).catch((e) => {
+            console.log(e);
             resolve(false);
         });
     });
@@ -201,7 +202,8 @@ export const fetchExpendituresHistory = async (userID: string) => {
 export const markExpenditurePaid = async (id: string) => {
     return pool.query(`
         UPDATE points_expenditures
-        SET paid = true
-        WHERE id = $1;    
-    `, [id]);
+        SET paid = true,
+        paid_at = $1
+        WHERE id = $2;    
+    `, [new Date().toISOString(), id]);
 }
