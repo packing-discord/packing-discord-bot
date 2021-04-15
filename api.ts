@@ -5,6 +5,7 @@ import fetch from 'node-fetch';
 import btoa from 'btoa';
 import cors from 'cors';
 import jwt from 'express-jwt';
+import products from './products';
 
 declare global {
     interface ParsedToken {
@@ -24,25 +25,37 @@ const port = process.env.API_PORT;
 interface LoginResponse {
     userData: any|null;
     scoreData: any|null;
+    products: any;
 };
 
 app.use(cors());
 
-app.get('/score', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: ['HS256'], requestProperty: 'auth' }), async (req, res) => {
+app.get('/update', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: ['HS256'], requestProperty: 'auth' }), async (req, res) => {
     const userID = req.auth?.userID as string;
     const score = await fetchUserScore(userID);
-    console.log(score)
-    res.send(score);
+    res.send({
+        scoreData: score,
+        products
+    });
+});
+
+app.post('/buy', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: ['HS256'], requestProperty: 'auth' }), async (req, res) => {
+    const productID = req.body.productID;
 });
 
 app.get('/auth/login', async (req, res) => {
 
+    console.log('Login request received with code ', req.query.code);
+
     const code = req.query.code as string;
-    if (!code) return res.send('Please retry!');
+    if (!code) return res.send({
+        error: true
+    });
 
     const response: LoginResponse = {
         userData: null,
-        scoreData: null
+        scoreData: null,
+        products
     };
 
     const tokenParams = new URLSearchParams();
@@ -79,6 +92,7 @@ app.get('/auth/login', async (req, res) => {
 
     response.scoreData = await fetchUserScore(userData.id);
 
+    console.log('Login request responded');
     return res.send({
         error: false,
         jwt: sign({ userID: userData.id }),

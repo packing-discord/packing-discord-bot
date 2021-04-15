@@ -6,20 +6,11 @@ config();
 import './api';
 
 import {
-
     savePing,
-
-    // addScoreEvent,
-
     startVoiceActivity,
     endVoiceActivity,
     terminateVoiceActivities,
-
-    addMessage,
-
-    // getWinLeaderboard,
-    fetchVoiceActivityLeaderboard,
-    // getMessagesLeaderboard
+    addMessage
 } from './db';
 import { Client, MessageEmbed, TextChannel, VoiceChannel, WSEventType } from 'discord.js';
 import { SlashCreator, GatewayServer } from 'slash-create';
