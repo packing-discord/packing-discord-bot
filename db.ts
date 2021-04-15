@@ -207,3 +207,17 @@ export const markExpenditurePaid = async (id: string) => {
         WHERE id = $2;    
     `, [new Date().toISOString(), id]);
 }
+
+export const createVoiceChannel = async (channelID: string, channelAuthorID: string) => {
+    return pool.query(`
+        INSERT INTO voice_channels_author
+        (channel_id, user_id) VALUES
+        ($1, $2);
+    `, [channelID, channelAuthorID]);
+};
+
+export const getVoiceChannelAuthor = async (channelID: string): Promise<string|null> => {
+    return pool.query(`
+        SELECT user_id FROM voice_channels_author WHERE channel_id = $1;
+    `, [channelID]).then(({ rows }) => rows[0]?.user_id);
+};

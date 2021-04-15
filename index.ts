@@ -11,16 +11,18 @@ import {
     endVoiceActivity,
     terminateVoiceActivities,
     addMessage,
-    markExpenditurePaid
+    markExpenditurePaid,
+    getVoiceChannelAuthor
 } from './db';
 import { Client, MessageEmbed, TextChannel, VoiceChannel, WSEventType } from 'discord.js';
 import { SlashCreator, GatewayServer } from 'slash-create';
 import { join } from 'path';
 import { formatMessageActivityLeaderboard, formatScoreLeaderboard, formatVoiceActivityLeaderboard } from './leaderboards';
 import PayPal from 'paypal-api';
+import humanizeDuration from 'humanize-duration';
 
 const client = new Client({
-    partials:  ['MESSAGE', 'CHANNEL', 'REACTION']
+    partials:  ['MESSAGE', 'CHANNEL', 'REACTION', 'GUILD_MEMBER']
 });
 
 const paypal = new PayPal({
@@ -174,6 +176,28 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         endVoiceActivity(newState.member.id);
         console.log(`[x] Voice activity ended for user ${newState.member.user.username}`);
     }
+
+});
+
+client.on('channelDelete', async (channel) => {
+
+    if (channel.type !== 'voice') return;
+    const voice = channel as VoiceChannel;
+    if (voice.parentID !== process.env.HOST_CHANNELS_CATEGORY) return;
+
+    const userID = await getVoiceChannelAuthor(channel.id);
+    const eventDuration = humanizeDuration(Date.now() - channel.createdTimestamp);
+    const embed = new MessageEmbed()
+        .setDescription(`The event (${voice.name}) lasted ${eventDuration}`)
+        .setColor('#000000')
+    if (userID) {
+        const user = await client.users.fetch(userID);
+        embed.setAuthor(`End of event channel created by ${user.tag}`, user.displayAvatarURL());
+    } else {
+        embed.setAuthor(`End of event channel created by Unknown#0000`);
+    }
+
+    (client.channels.cache.get(process.env.HOST_LOGS_CHANNEL!)! as TextChannel).send(embed);
 
 });
 
