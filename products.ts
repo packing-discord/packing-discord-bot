@@ -12,7 +12,7 @@ export default [
         points: 30
     },
     {
-        id: 2,
+        id: 3,
         name: '$50 PayPal',
         paypal: 50,
         points: 50

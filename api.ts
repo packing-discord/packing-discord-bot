@@ -6,6 +6,8 @@ import btoa from 'btoa';
 import cors from 'cors';
 import jwt from 'express-jwt';
 import products from './products';
+import client from './';
+import { MessageEmbed, TextChannel } from 'discord.js';
 
 declare global {
     interface ParsedToken {
@@ -87,9 +89,20 @@ app.post('/buy', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: [
     }
 
     const newScore = await fetchUserScore(userID);
+    const newHistory = await fetchExpendituresHistory(userID);
+
+    const user = await client.users.fetch(userID);
+    const embed = new MessageEmbed()
+        .setAuthor(user.username, user.displayAvatarURL())
+        .setDescription(`Current points: ${score.points}. Points used: ${product.points} ($${product.paypal} will be sent)`)
+        .setColor('RED');
+    (client.channels.cache.get(process.env.TRANSACTION_CHANNEL!)! as TextChannel).send(embed).then((m) => {
+        m.react('✅');
+    });
 
     return res.send({
-        scoreData: newScore
+        scoreData: newScore,
+        history: newHistory
     });
 
 });
