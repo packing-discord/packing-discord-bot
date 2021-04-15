@@ -10,14 +10,71 @@ import {
     startVoiceActivity,
     endVoiceActivity,
     terminateVoiceActivities,
-    addMessage
+    addMessage,
+    markExpenditurePaid
 } from './db';
 import { Client, MessageEmbed, TextChannel, VoiceChannel, WSEventType } from 'discord.js';
 import { SlashCreator, GatewayServer } from 'slash-create';
 import { join } from 'path';
 import { formatMessageActivityLeaderboard, formatScoreLeaderboard, formatVoiceActivityLeaderboard } from './leaderboards';
+import PayPal from 'paypal-api';
 
-const client = new Client();
+const client = new Client({
+    partials:  ['MESSAGE', 'CHANNEL', 'REACTION']
+});
+
+const paypal = new PayPal({
+    clientID: process.env.PAYPAL_CLIENT_ID!,
+    clientSecret: process.env.PAYPAL_CLIENT_SECRET!,
+    sandboxMode: true
+});
+
+client.on('messageReactionAdd', async (reaction, user) => {
+	if (reaction.partial) await reaction.fetch();
+
+    if (user.id !== process.env.TRANSACTION_APPROVAL_USER_ID) return;
+    if (reaction.message.channel.id !== process.env.TRANSACTION_CHANNEL) return;
+
+    const embed = reaction.message.embeds[0];
+    if (!embed) return;
+
+    const transactionID = embed.fields.find((field) => field.name === 'Transaction ID')?.value!;
+    const userEmail = embed.fields.find((field) => field.name === 'User email')?.value!;
+    const productPrice = embed.fields.find((field) => field.name === 'Product price')?.value!;
+    const paymentStatus = embed.fields.find((field) => field.name === 'Status')?.value!;
+
+    if (!paymentStatus.includes('Processing')) return;
+    else {
+        reaction.remove();
+        const newEmbed = embed;
+        embed.fields = embed.fields.filter((f) => f.name !== 'Status');
+        embed.addField('Status', 'Completed ✅');
+        reaction.message.edit(newEmbed);
+
+        markExpenditurePaid(transactionID)
+
+        paypal.createPayout({
+            sender_batch_header: {
+                sender_batch_id: `PACKING-${transactionID}`,
+                email_subject: "You have a payout!",
+                email_message: "You have received a payout! Thanks for using Packing Discord!"
+            },
+            items: [
+                {
+                    recipient_type: "EMAIL",
+                    amount: {
+                        value: productPrice,
+                        currency: "USD"
+                    },
+                    note: "Thanks for using Packing Discord!",
+                    sender_item_id: `PACKING-${transactionID}`,
+                    receiver: userEmail
+                }
+            ]
+        });
+    }
+    
+});
 
 const creator = new SlashCreator({
     applicationID: process.env.APP_ID!,

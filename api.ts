@@ -78,10 +78,11 @@ app.post('/buy', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: [
         });
     }
 
-    const transactionConfirmed = await buyProduct(userID, product?.id!, new Date().toISOString(), product?.points!, req.body.emailAddress);
+    const paymentDate = new Date().toISOString();
+    const transactionID = await buyProduct(userID, product?.id!, paymentDate, product?.points!, req.body.emailAddress);
 
-    console.log('Transaction confirmed: '+transactionConfirmed);
-    if (!transactionConfirmed) {
+    console.log('Transaction ID: '+transactionID);
+    if (!transactionID) {
         return res.send({
             error: true,
             message: 'Not enough points'
@@ -95,11 +96,13 @@ app.post('/buy', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: [
     const embed = new MessageEmbed()
         .setAuthor(user.tag, user.displayAvatarURL())
         .setDescription(`A new payment is pending your approval ✅`)
+        .addField('Transaction ID', transactionID)
         .addField('User ID', userID)
         .addField('User email', emailAddress)
         .addField('User points', score.points)
         .addField('Product price', product?.paypal)
         .addField('Points paid by the user', product.points)
+        .addField('Creation Date', paymentDate)
         .addField('Status', 'Processing... (react to approve)')
         .setColor('RED');
     (client.channels.cache.get(process.env.TRANSACTION_CHANNEL!)! as TextChannel).send(embed).then((m) => {

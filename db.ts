@@ -181,11 +181,11 @@ export const buyProduct = async (userID: string, productID: number, createdAt: s
         pool.query(`
             INSERT INTO points_expenditures
             (user_id, nb_points, product_id, created_at, approved, paid, email_address) VALUES
-            ($1, $2, $3, $4, $5, $6, $7);
-        `, [userID, numberOfPoints, productID, createdAt, false, false, emailAddress]).then(() => {
-            resolve(true);
+            ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id;
+        `, [userID, numberOfPoints, productID, createdAt, false, false, emailAddress]).then(({ rows }) => {
+            resolve(rows[0].id);
         }).catch((e) => {
-            console.log(e)
             resolve(false);
         });
     });
@@ -197,3 +197,11 @@ export const fetchExpendituresHistory = async (userID: string) => {
         WHERE user_id = $1;
     `, [userID]).then(({ rows }) => rows);
 };
+
+export const markExpenditurePaid = async (id: string) => {
+    return pool.query(`
+        UPDATE points_expenditures
+        SET paid = true
+        WHERE id = $1;    
+    `, [id]);
+}
