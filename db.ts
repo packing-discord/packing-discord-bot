@@ -1,3 +1,23 @@
+/**
+CREATE FUNCTION validate_expenditures_func()
+  RETURNS trigger AS
+$func$
+BEGIN
+   IF (SELECT (CASE WHEN sum(nb_points) is null THEN 0 ELSE sum(nb_points) END + NEW.nb_points) FROM points_expenditures WHERE user_id = NEW.user_id)
+    > (SELECT (CASE WHEN sum(CASE WHEN event_type = 'win' THEN 1 ELSE 0 END) is null THEN 0 ELSE sum(CASE WHEN event_type = 'win' THEN 1 ELSE 0 END) END) FROM users_scores_events WHERE user_id = NEW.user_id) THEN
+      RAISE EXCEPTION 'too many points spent';
+   ELSE
+   	  RAISE NOTICE '% points for % wins spent', (SELECT (CASE WHEN sum(nb_points) is null THEN 0 ELSE sum(nb_points) END + NEW.nb_points) FROM points_expenditures WHERE user_id = NEW.user_id), (SELECT sum(CASE WHEN event_type = 'win' THEN 1 ELSE 0 END) FROM users_scores_events WHERE user_id = NEW.user_id);
+   END IF;
+   RETURN NEW;
+END
+$func$ LANGUAGE plpgsql;
+
+CREATE TRIGGER validate_expenditures_trigg
+BEFORE INSERT ON points_expenditures
+FOR EACH ROW EXECUTE PROCEDURE validate_expenditures_func();
+*/
+
 import { Snowflake } from 'discord.js';
 import { Pool } from 'pg';
 
@@ -144,12 +164,29 @@ export const fetchUserScore = async (userID: string) => {
     `, [userID]);
 
     const { rows: [pointRows] } = await pool.query(`
-        SELECT user_id, sum(nb_points) as points FROM points_expenditures WHERE user_id = $1 GROUP BY 1
+        SELECT user_id, sum(nb_points) as points_spent FROM points_expenditures WHERE user_id = $1 GROUP BY 1
     `, [userID]);
 
     return {
-        wins: scoreRows.wins as number,
-        losses: scoreRows.losses as number,
-        points: pointRows.points as number
+        wins: scoreRows?.wins as number || 0,
+        losses: scoreRows?.losses as number || 0,
+        pointsSpent: pointRows?.points_spent as number || 0,
+        points: (scoreRows?.wins as number || 0) - (pointRows?.points_spent as number || 0)
     };
+};
+
+export const buyProduct = async (userID: string, productID: number, createdAt: string, numberOfPoints: number, emailAddress: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+        console.log(userID)
+        pool.query(`
+            INSERT INTO points_expenditures
+            (user_id, nb_points, product_id, created_at, approved, paid, email_address) VALUES
+            ($1, $2, $3, $4, $5, $6, $7);
+        `, [userID, numberOfPoints, productID, createdAt, false, false, emailAddress]).then(() => {
+            resolve(true);
+        }).catch((e) => {
+            console.log(e)
+            resolve(false);
+        });
+    });
 };

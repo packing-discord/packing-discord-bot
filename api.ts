@@ -1,5 +1,5 @@
 import express from 'express';
-import { fetchUserScore } from './db';
+import { buyProduct, fetchUserScore } from './db';
 import { sign } from './jwt';
 import fetch from 'node-fetch';
 import btoa from 'btoa';
@@ -29,6 +29,8 @@ interface LoginResponse {
 };
 
 app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 app.get('/update', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: ['HS256'], requestProperty: 'auth' }), async (req, res) => {
     const userID = req.auth?.userID as string;
@@ -40,7 +42,53 @@ app.get('/update', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms:
 });
 
 app.post('/buy', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: ['HS256'], requestProperty: 'auth' }), async (req, res) => {
+
+    console.log(req.auth?.userID + ' is buying something')
+
     const productID = req.body.productID;
+    const emailAddress = req.body.emailAddress;
+
+    if (!productID || !emailAddress) {
+        return res.send({
+            error: true
+        });
+    }
+    const product = products.find((product) => product.id === productID);
+
+    if (!product) {
+        return res.send({
+            error: true,
+            message: 'Product not found'
+        });
+    }
+
+    const userID = req.auth?.userID as string;
+    const score = await fetchUserScore(userID);
+    
+    console.log(`Points: ${score.points} Required points: ${product?.points!}`)
+    if (score.points < product?.points!) {
+        return res.send({
+            error: true,
+            message: 'Not enough points'
+        });
+    }
+
+    const transactionConfirmed = await buyProduct(userID, product?.id!, new Date().toISOString(), product?.points!, req.body.emailAddress);
+
+    console.log('Transaction confirmed: '+transactionConfirmed);
+    if (!transactionConfirmed) {
+        return res.send({
+            error: true,
+            message: 'Not enough points'
+        });
+    }
+
+    const newScore = await fetchUserScore(userID);
+
+    return res.send({
+        scoreData: newScore
+    });
+
 });
 
 app.get('/auth/login', async (req, res) => {
