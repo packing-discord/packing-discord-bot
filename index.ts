@@ -22,6 +22,7 @@ import PayPal from 'paypal-api';
 import humanizeDuration from 'humanize-duration';
 
 const client = new Client({
+    fetchAllMembers: true,
     partials:  ['MESSAGE', 'CHANNEL', 'REACTION', 'GUILD_MEMBER']
 });
 
