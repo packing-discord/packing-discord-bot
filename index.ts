@@ -14,7 +14,7 @@ import {
     markExpenditurePaid,
     getVoiceChannelAuthor
 } from './db';
-import { Client, MessageEmbed, TextChannel, VoiceChannel, WSEventType } from 'discord.js';
+import { Client, MessageEmbed, TextChannel, VoiceChannel, WSEventType, CategoryChannel } from 'discord.js';
 import { SlashCreator, GatewayServer } from 'slash-create';
 import { join } from 'path';
 import { formatMessageActivityLeaderboard, formatScoreLeaderboard, formatVoiceActivityLeaderboard } from './leaderboards';
@@ -148,6 +148,28 @@ export const updateWinsLeaderboard = async () => {
     else scoreEmbed.edit({ embed: newScoreEmbed });
 };
 
+const emptyChannels = new Set();
+
+const deleteEmptyEvent = () => {
+    const server = client.guilds.cache.get(process.env.GUILD_ID!);
+    const category = server?.channels.cache.get(process.env.HOST_CHANNELS_CATEGORY!) as CategoryChannel;
+    category.children.forEach((channel) => {
+        if (channel.members.size === 0) {
+            const shouldBeDeleted = emptyChannels.has(channel.id);
+            if (shouldBeDeleted) {
+                console.log(`Event channel ${channel.name} has been deleted!`);
+                channel.delete();
+                emptyChannels.delete(channel.id);
+            } else {
+                console.log(`Event channel ${channel.name} is going to be deleted!`);
+                emptyChannels.add(channel.id);
+            }
+        } else {
+            emptyChannels.delete(channel.id);
+        }
+    });
+}
+
 client.on('ready', () => {
     console.log(`Ready. Logged in as ${client.user?.username}`);
     terminateVoiceActivities();
@@ -160,6 +182,7 @@ client.on('ready', () => {
     updateWinsLeaderboard();
     setInterval(() => updateActivityLeaderboard(), 10000);
     setInterval(() => updateWinsLeaderboard(), 10000);
+    setInterval(() => deleteEmptyEvent(), 10000);
 });
 
 client.on('voiceStateUpdate', async (oldState, newState) => {
