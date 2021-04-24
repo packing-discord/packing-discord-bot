@@ -29,7 +29,7 @@ const client = new Client({
 const paypal = new PayPal({
     clientID: process.env.PAYPAL_CLIENT_ID!,
     clientSecret: process.env.PAYPAL_CLIENT_SECRET!,
-    sandboxMode: true
+    sandboxMode: process.env.PAYPAL_ACCOUNT_TYPE! === 'sandbox'
 });
 
 client.on('messageReactionAdd', async (reaction, user) => {
