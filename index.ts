@@ -55,26 +55,6 @@ client.on('messageReactionAdd', async (reaction, user) => {
         reaction.message.edit(newEmbed);
 
         markExpenditurePaid(transactionID)
-
-        paypal.createPayout({
-            sender_batch_header: {
-                sender_batch_id: `PACKING-${transactionID}`,
-                email_subject: "You have a payout!",
-                email_message: "You have received a payout! Thanks for using Packing Discord!"
-            },
-            items: [
-                {
-                    recipient_type: "EMAIL",
-                    amount: {
-                        value: productPrice,
-                        currency: "USD"
-                    },
-                    note: "Thanks for using Packing Discord!",
-                    sender_item_id: `PACKING-${transactionID}`,
-                    receiver: userEmail
-                }
-            ]
-        });
     }
     
 });
