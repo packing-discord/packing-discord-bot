@@ -174,7 +174,7 @@ const getStaffLeaderboardContent = () => {
 
 const synchronizeStaffLeaderboard = async () => {
 
-    const circles = ['blue', 'red', 'green', 'orange', 'purple', 'pink', 'yellow', 'black', 'brown'].map((c) => `circle_${c}`);
+    const circles = ['blue', 'red', 'green', 'orange', 'purple', 'pink', 'yellow', 'black', 'brown'].map((c) => `:circle_${c}:`);
 
     // this function will fetch all the staff members and create or update the leaderboard
     const guild = client.guilds.cache.get(process.env.GUILD_ID!);
@@ -211,6 +211,8 @@ const synchronizeStaffLeaderboard = async () => {
     const content = getStaffLeaderboardContent();
     if (!message) channel.send(content);
     else message?.edit(content);
+
+    staffLeaderboardEntries.forEach((entry) => message?.react(entry.emoji));
 
 }
 
