@@ -12,9 +12,13 @@ import {
     terminateVoiceActivities,
     addMessage,
     markExpenditurePaid,
-    getVoiceChannelAuthor
+    getVoiceChannelAuthor,
+    getStaffLeaderboardEntries,
+    createLeaderboardEntry,
+    deleteUnusedLeaderboardEntries,
+    assignVote
 } from './db';
-import { Client, MessageEmbed, TextChannel, VoiceChannel, WSEventType, CategoryChannel } from 'discord.js';
+import { Client, MessageEmbed, TextChannel, VoiceChannel, WSEventType, CategoryChannel, Message } from 'discord.js';
 import { SlashCreator, GatewayServer } from 'slash-create';
 import { join } from 'path';
 import { formatMessageActivityLeaderboard, formatScoreLeaderboard, formatVoiceActivityLeaderboard } from './leaderboards';
@@ -150,6 +154,66 @@ const deleteEmptyEvent = () => {
     });
 }
 
+interface StaffLeaderboardEntry {
+    user_id: string;
+    emoji: string;
+    count: number;
+    username: string;
+}
+
+let staffLeaderboardEntries: StaffLeaderboardEntry[]|null = null;
+let staffLeaderboardMessage: Message|null = null;
+
+const getStaffLeaderboardContent = () => {
+    let content = `**Staff Leaderboard** 🌟\nReact with the right emoji to upvote someone!`;
+    staffLeaderboardEntries?.forEach((entry) => {
+        content += `\n\n${entry.emoji} | **${entry.username}** - ${entry.count}`;
+    });
+    return content;
+}
+
+const synchronizeStaffLeaderboard = async () => {
+
+    const circles = ['blue', 'red', 'green', 'orange', 'purple', 'pink', 'yellow', 'black', 'brown'].map((c) => `circle_${c}`);
+
+    // this function will fetch all the staff members and create or update the leaderboard
+    const guild = client.guilds.cache.get(process.env.GUILD_ID!);
+    const channel = guild?.channels.cache.get(process.env.STAFF_LEADERBOARD_ID!) as TextChannel;
+
+    const staffLeaderboardEntriesDB = await getStaffLeaderboardEntries();
+    staffLeaderboardEntries = [];
+    const staff = guild?.members.cache.filter(m => m.roles.cache.has(process.env.STAFF_ROLE!)).array()!;
+    for (let staffMember of staff) {
+        // check if there is an entry, and if there is not create, it
+        const entry = staffLeaderboardEntriesDB.find((entry) => entry.user_id === staffMember.id);
+        if (!entry) {
+            const entryData = {
+                user_id: staffMember.id,
+                emoji: circles.find((c) => !staffLeaderboardEntriesDB.some((e) => e.emoji === c))!
+            }
+            staffLeaderboardEntries.push({
+                ...entryData,
+                count: 0,
+                username: staffMember.user.username
+            });
+            await createLeaderboardEntry(entryData);
+        } else staffLeaderboardEntries.push({
+            ...entry,
+            username: staffMember.user.username
+        })
+    }
+
+    await deleteUnusedLeaderboardEntries(staffLeaderboardEntries.map((e) => e.emoji));
+
+    const messages = await channel.messages.fetch();
+    // find the first message sent by the client
+    const message = messages.find((message) => message.author.id === client.user?.id);
+    const content = getStaffLeaderboardContent();
+    if (!message) channel.send(content);
+    else message?.edit(content);
+
+}
+
 client.on('ready', () => {
     console.log(`Ready. Logged in as ${client.user?.username}`);
     terminateVoiceActivities();
@@ -160,9 +224,27 @@ client.on('ready', () => {
     });
     updateActivityLeaderboard();
     updateWinsLeaderboard();
+    synchronizeStaffLeaderboard();
     setInterval(() => updateActivityLeaderboard(), 10000);
     setInterval(() => updateWinsLeaderboard(), 10000);
     setInterval(() => deleteEmptyEvent(), 10000);
+});
+
+client.on('messageReactionAdd', async (reaction, user) => {
+
+    const message = reaction.message;
+    const channel = message.channel;
+
+    if (channel.id !== process.env.STAFF_LEADERBOARD_ID) return;
+
+    const staff = staffLeaderboardEntries?.find((entry) => entry.emoji === reaction.emoji.name);
+    if (!staff) return;
+
+    await assignVote(user.id, staff.user_id);
+    staffLeaderboardEntries = await getStaffLeaderboardEntries();
+    const content = getStaffLeaderboardContent();
+    staffLeaderboardMessage?.edit(content);
+
 });
 
 client.on('voiceStateUpdate', async (oldState, newState) => {

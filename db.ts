@@ -221,3 +221,42 @@ export const getVoiceChannelAuthor = async (channelID: string): Promise<string|n
         SELECT user_id FROM voice_channels_author WHERE channel_id = $1;
     `, [channelID]).then(({ rows }) => rows[0]?.user_id);
 };
+
+export const getStaffLeaderboardEntries = () => {
+    return pool.query(`
+        SELECT l.*, (SELECT count(lv.*) FROM staff_leaderboard_votes lv WHERE selected_staff_id = l.user_id) FROM staff_leaderboard l
+    `).then(({ rows }) => rows);
+};
+
+export const createLeaderboardEntry = ({ user_id, emoji }: { user_id: string, emoji: string }) => {
+    return pool.query(`
+        INSERT INTO staff_leaderboard
+        (user_id, emoji) VALUES
+        ($1, $2);
+    `, [user_id, emoji]);
+}
+
+export const deleteUnusedLeaderboardEntries = (usedEmojis: string[]) => {
+    return pool.query(`
+        DELETE FROM staff_leaderboard WHERE emoji NOT IN ($1);
+    `, [usedEmojis.join(',')]);
+}
+
+export const assignVote = async (userID: string, selectedStaffID: string) => {
+    const { rows } = await pool.query(`
+        SELECT user_id FROM staff_leaderboard_votes WHERE user_id = $1
+    `, [userID]);
+    if (rows.length > 0) {
+        return pool.query(`
+            UPDATE staff_leaderboard_votes
+            SET selected_staff_id = $1
+            WHERE user_id = $2;
+        `, [selectedStaffID, userID]);
+    } else {
+        return pool.query(`
+            INSERT INTO staff_leaderboard_votes
+            (user_id, selected_staff_id) VALUES
+            ($1, $2);
+        `, [userID, selectedStaffID]);
+    }
+}
