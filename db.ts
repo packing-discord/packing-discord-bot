@@ -237,9 +237,10 @@ export const createLeaderboardEntry = ({ user_id, emoji }: { user_id: string, em
 }
 
 export const deleteUnusedLeaderboardEntries = (usedEmojis: string[]) => {
+    console.log(`DELETE FROM staff_leaderboard WHERE NOT emoji IN (${usedEmojis.map(e => `'${e}'`).join(', ')});`);
     return pool.query(`
-        DELETE FROM staff_leaderboard WHERE NOT emoji IN ($1);
-    `, [usedEmojis]);
+        DELETE FROM staff_leaderboard WHERE NOT emoji IN (${usedEmojis.map(e => `'${e}'`).join(', ')});
+    `);
 }
 
 export const assignVote = async (userID: string, selectedStaffID: string) => {
