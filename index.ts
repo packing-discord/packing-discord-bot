@@ -248,6 +248,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
     if (user.bot) return;
 
     const staff = staffLeaderboardEntries?.find((entry) => entry.emoji === reaction.emoji.name);
+    console.log(staff)
     if (!staff) return;
 
     await assignVote(user.id, staff.user_id);
@@ -255,6 +256,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
         ...e,
         username: channel.guild.members.cache.get(e.user_id)?.user.username
     }));
+    console.log(staffLeaderboardEntries);
     const content = getStaffLeaderboardContent();
     staffLeaderboardMessage?.edit(content);
 
