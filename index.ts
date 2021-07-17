@@ -237,6 +237,7 @@ client.on('ready', () => {
     setInterval(() => updateActivityLeaderboard(), 10000);
     setInterval(() => updateWinsLeaderboard(), 10000);
     setInterval(() => deleteEmptyEvent(), 10000);
+    setInterval(() => synchronizeStaffLeaderboard(), 60 * 1000 * 60);
 });
 
 client.on('messageReactionAdd', async (reaction, user) => {
@@ -248,7 +249,6 @@ client.on('messageReactionAdd', async (reaction, user) => {
     if (user.bot) return;
 
     const staff = staffLeaderboardEntries?.find((entry) => entry.emoji === reaction.emoji.name);
-    console.log(staff)
     if (!staff) return;
 
     await assignVote(user.id, staff.user_id);
