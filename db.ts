@@ -239,7 +239,7 @@ export const createLeaderboardEntry = ({ user_id, emoji }: { user_id: string, em
 export const deleteUnusedLeaderboardEntries = (usedEmojis: string[]) => {
     return pool.query(`
         DELETE FROM staff_leaderboard WHERE NOT emoji IN ($1);
-    `, [usedEmojis.map((e) => `'${e}'`).join(',')]);
+    `, [usedEmojis]);
 }
 
 export const assignVote = async (userID: string, selectedStaffID: string) => {
