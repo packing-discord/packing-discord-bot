@@ -203,6 +203,7 @@ const synchronizeStaffLeaderboard = async () => {
         })
     }
 
+    console.log(`Deleting not in ${staffLeaderboardEntries.map((e) => e.emoji)}`);
     await deleteUnusedLeaderboardEntries(staffLeaderboardEntries.map((e) => e.emoji));
 
     const messages = await channel.messages.fetch();
