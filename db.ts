@@ -238,7 +238,7 @@ export const createLeaderboardEntry = ({ user_id, emoji }: { user_id: string, em
 
 export const deleteUnusedLeaderboardEntries = (usedEmojis: string[]) => {
     return pool.query(`
-        DELETE FROM staff_leaderboard WHERE emoji NOT IN ($1);
+        DELETE FROM staff_leaderboard WHERE NOT emoji IN ($1);
     `, [usedEmojis.join(',')]);
 }
 

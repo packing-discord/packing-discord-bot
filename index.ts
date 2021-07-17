@@ -241,9 +241,10 @@ client.on('messageReactionAdd', async (reaction, user) => {
     const channel = message.channel;
 
     if (channel.id !== process.env.STAFF_LEADERBOARD_ID) return;
+    if (user.bot) return;
 
-    console.log(reaction);
     const staff = staffLeaderboardEntries?.find((entry) => entry.emoji === reaction.emoji.name);
+    console.log(staff);
     if (!staff) return;
 
     await assignVote(user.id, staff.user_id);
