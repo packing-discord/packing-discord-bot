@@ -210,8 +210,11 @@ const synchronizeStaffLeaderboard = async () => {
     // find the first message sent by the client
     const message = messages.find((message) => message.author.id === client.user?.id);
     const content = getStaffLeaderboardContent();
-    if (!message) channel.send(content);
-    else message?.edit(content);
+    if (!message) channel.send(content).then((m) => staffLeaderboardMessage = m);
+    else {
+        staffLeaderboardMessage = message;
+        message?.edit(content);
+    }
 
     staffLeaderboardEntries.forEach((entry) => {
         console.log(`Reacting with ${entry.emoji}`);
@@ -239,17 +242,19 @@ client.on('ready', () => {
 client.on('messageReactionAdd', async (reaction, user) => {
 
     const message = reaction.message;
-    const channel = message.channel;
+    const channel = message.channel as TextChannel;
 
     if (channel.id !== process.env.STAFF_LEADERBOARD_ID) return;
     if (user.bot) return;
 
     const staff = staffLeaderboardEntries?.find((entry) => entry.emoji === reaction.emoji.name);
-    console.log(staff);
     if (!staff) return;
 
     await assignVote(user.id, staff.user_id);
-    staffLeaderboardEntries = await getStaffLeaderboardEntries();
+    staffLeaderboardEntries = (await getStaffLeaderboardEntries()).map((e) => ({
+        ...e,
+        username: channel.guild.members.cache.get(e.user_id)?.user.username
+    }));
     const content = getStaffLeaderboardContent();
     staffLeaderboardMessage?.edit(content);
 
