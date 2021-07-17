@@ -203,7 +203,7 @@ const synchronizeStaffLeaderboard = async () => {
         })
     }
 
-    await deleteUnusedLeaderboardEntries(staffLeaderboardEntries.map((e) => e.emoji));
+    //await deleteUnusedLeaderboardEntries(staffLeaderboardEntries.map((e) => e.emoji));
 
     const messages = await channel.messages.fetch();
     // find the first message sent by the client
@@ -242,6 +242,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
     if (channel.id !== process.env.STAFF_LEADERBOARD_ID) return;
 
+    console.log(reaction);
     const staff = staffLeaderboardEntries?.find((entry) => entry.emoji === reaction.emoji.name);
     if (!staff) return;
 
