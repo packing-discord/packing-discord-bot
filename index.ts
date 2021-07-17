@@ -189,7 +189,7 @@ const synchronizeStaffLeaderboard = async () => {
         if (!entry) {
             const entryData = {
                 user_id: staffMember.id,
-                emoji: circles.find((c) => !staffLeaderboardEntriesDB.some((e) => e.emoji === c))!
+                emoji: circles.find((c) => !staffLeaderboardEntriesDB.some((e) => e.emoji === c) && staffLeaderboardEntries.some((e) => e.emoji === c))!
             }
             staffLeaderboardEntries.push({
                 ...entryData,
