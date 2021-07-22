@@ -1,0 +1,37 @@
+[
+    {
+        "name": "Janitor",
+        "chance": 95,
+        "salary": 14
+    },
+    {
+        "name": "Barbershop",
+        "chance": 90,
+        "salary": 15
+    },
+    {
+        "name": "Office Clerk",
+        "chance": 80,
+        "salary": 19
+    },
+    {
+        "name": "Cashier",
+        "chance": 70,
+        "salary": 23
+    },
+    {
+        "name": "Waiter",
+        "chance": 65,
+        "salary": 26
+    },
+    {
+        "name": "Teacher",
+        "chance": 50,
+        "salary": 36
+    },
+    {
+        "name": "Doctor",
+        "chance": 15,
+        "salary": 120
+    }
+]

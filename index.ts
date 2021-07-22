@@ -18,12 +18,14 @@ import {
     deleteUnusedLeaderboardEntries,
     assignVote
 } from './db';
-import { Client, MessageEmbed, TextChannel, VoiceChannel, WSEventType, CategoryChannel, Message } from 'discord.js';
+import { Client, MessageEmbed, TextChannel, VoiceChannel, WSEventType, CategoryChannel, Message, Snowflake, GuildMember } from 'discord.js';
 import { SlashCreator, GatewayServer } from 'slash-create';
 import { join } from 'path';
 import { formatMessageActivityLeaderboard, formatScoreLeaderboard, formatVoiceActivityLeaderboard } from './leaderboards';
 import PayPal from 'paypal-api';
 import humanizeDuration from 'humanize-duration';
+import { getUsers, updateUser } from './sequelize-user';
+import chalk from 'chalk';
 
 const client = new Client({
     fetchAllMembers: true,
@@ -154,6 +156,40 @@ const deleteEmptyEvent = () => {
     });
 }
 
+const checkHunger = () => {
+    getUsers().then((users) => {
+        users.forEach((user) => {
+            let newHunger = user.hunger - 0.023;
+            let newHealth = user.health;
+            let newMoney = user.money;
+            let newFoods = user.foods;
+            if (newHunger <= 0) {
+                newHunger = 0;
+                if (user.hunger > 0) {
+                    // send warning message
+                    client.users.fetch(user.id).then((u) => u.send(':fries: Watch out! You will starve if you do not eat within the next 3 hours!'));
+                }
+                newHealth = newHealth - 0.55;
+                if (newHealth < 0) {
+                    // reset the stats
+                    newHealth = 100;
+                    newHunger = 100;
+                    newMoney = 0;
+                    newFoods = [];
+                    // send warning message
+                    client.users.fetch(user.id).then((u) => u.send(':confused: You starved to death...'));
+                }
+            }
+            updateUser(user.id, {
+                health: newHealth,
+                money: newMoney,
+                foods: newFoods,
+                hunger: newHunger
+            });
+        });
+    });
+}
+
 interface StaffLeaderboardEntry {
     user_id: string;
     emoji: string;
@@ -223,6 +259,57 @@ const synchronizeStaffLeaderboard = async () => {
 
 }
 
+interface WaitingRole {
+    value: Snowflake;
+    time: number;
+}
+
+let waitingForRoles: WaitingRole[] = [];
+
+const changeRole = async (member: GuildMember, roleID: Snowflake, type: 'add' | 'remove') => {
+    if (waitingForRoles.some((element) => element.value === member.id)) {
+        console.log(chalk.yellow(`${member.user.tag} is still waiting for their roles...`));
+    }
+    waitingForRoles.push({
+        value: member.id,
+        time: Date.now()
+    });
+    const promise = type === 'add' ? member.roles.add(roleID) : member.roles.remove(roleID);
+    promise.then(() => {
+        console.log(chalk.green(`[${waitingForRoles.length}] ${member.user.tag} has got their roles!`));
+        waitingForRoles = waitingForRoles.filter((element) => element.value !== member.id);
+    });
+}
+
+setInterval(() => {
+    const time = Date.now();
+    waitingForRoles = waitingForRoles.filter((item) => {
+        return time < item.time + (30000);
+    });
+}, 500);
+
+const lastAutoroleCheckedAt: number|null = null;
+const checkAutoRole = async () => {
+    const server = client.guilds.cache.get(process.env.GUILD_ID!);
+    const tgRole = server?.roles.cache.get(process.env.TG_ROLE!)!;
+    const statusRole = server?.roles.cache.get(process.env.STATUS_ROLE!)!;
+
+    if (!lastAutoroleCheckedAt || (lastAutoroleCheckedAt + (60000*10) < Date.now())) {
+        await server?.members.fetch();
+    }
+
+    server?.members.cache.forEach((member) => {
+        const hasStatusPresence = member.user.presence.activities[0]?.state?.includes('.gg/packing');
+        const hasStatusRole = member.roles.cache.has(statusRole.id);
+
+        if (hasStatusPresence && !hasStatusRole) {
+            changeRole(member, statusRole.id, 'add');
+        } else if (!hasStatusPresence && hasStatusRole) {
+            changeRole(member, statusRole.id, 'remove');
+        }
+    });
+}
+
 client.on('ready', () => {
     console.log(`Ready. Logged in as ${client.user?.username}`);
     terminateVoiceActivities();
@@ -234,10 +321,14 @@ client.on('ready', () => {
     updateActivityLeaderboard();
     updateWinsLeaderboard();
     synchronizeStaffLeaderboard();
+    checkHunger();
+    checkAutoRole();
     setInterval(() => updateActivityLeaderboard(), 10000);
     setInterval(() => updateWinsLeaderboard(), 10000);
     setInterval(() => deleteEmptyEvent(), 10000);
     setInterval(() => synchronizeStaffLeaderboard(), 60 * 1000 * 60);
+    setInterval(() => checkHunger(), 60 * 1000);
+    setInterval(() => checkAutoRole(), 30000);
 });
 
 client.on('messageReactionAdd', async (reaction, user) => {

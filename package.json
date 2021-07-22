@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "btoa": "^1.2.1",
+    "chalk": "^4.1.1",
     "cors": "^2.8.5",
     "discord.js": "^12.5.1",
     "dotenv": "^8.2.0",
@@ -20,6 +21,7 @@
     "passport-discord": "^0.1.4",
     "paypal-api": "^0.1.4",
     "pg": "^8.5.1",
+    "sequelize": "^6.6.5",
     "slash-create": "^3.0.1"
   },
   "devDependencies": {
