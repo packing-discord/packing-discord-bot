@@ -210,7 +210,7 @@ const getStaffLeaderboardContent = () => {
 
 const synchronizeStaffLeaderboard = async () => {
 
-    const circles = ['🔵', '🔴', '🟢', '🟠', '🟣', '⚪', '🟡', '⚫', '🟤'];
+    const circles = ['🔵', '🔴', '🟢', '🟠', '🟣', '⚪', '🟡', '⚫', '🟤', '🎨', '🫒', '🛼', '🌈', '🌊', '🎈', '🎉', '🎊', '🎁', '🎀'];
 
     // this function will fetch all the staff members and create or update the leaderboard
     const guild = client.guilds.cache.get(process.env.GUILD_ID!);
