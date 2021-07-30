@@ -26,7 +26,7 @@ export default class extends SlashCommand {
         if (!ctx.guildID || !ctx.member) return;
         const userID = ctx.options.user as Snowflake;
         const user = client.users.cache.get(userID) || await client.users.fetch(userID);
-        const lastSeenAt = await getUserLastSeenAt(userID);
+        const lastSeenAt = user.presence.status !== 'offline' ? new Date() : await getUserLastSeenAt(userID);
         const embed = new MessageEmbed()
         .setAuthor(`Activity of ${user.tag}`, user.displayAvatarURL())
         .setDescription(

@@ -400,7 +400,7 @@ client.on('channelDelete', async (channel) => {
 
 client.on('presenceUpdate', async (oldPresence, newPresence) => {
 
-    if (oldPresence?.status === 'offline' && newPresence.status !== oldPresence.status) {
+    if (oldPresence?.status !== 'offline' && newPresence.status === 'offline') {
         updateUserLastSeenAt(newPresence.userID);
     }
 
