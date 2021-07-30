@@ -400,6 +400,7 @@ client.on('channelDelete', async (channel) => {
 
 client.on('presenceUpdate', async (oldPresence, newPresence) => {
 
+    console.log(`${newPresence.user?.tag} (${newPresence.userID} moved from ${oldPresence?.status} to ${newPresence.status}`);
     if (oldPresence?.status !== 'offline' && newPresence.status === 'offline') {
         updateUserLastSeenAt(newPresence.userID);
     }
