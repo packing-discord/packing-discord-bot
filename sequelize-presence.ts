@@ -59,5 +59,6 @@ export const updateUserLastSeenAt = (userID: Snowflake): Promise<void> => {
                     id: userID
                 }).then(() => resolve());
             }
+        });
     });
 };
