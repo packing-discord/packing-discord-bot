@@ -34,7 +34,7 @@ export const getUserLastSeenAt = (userID: Snowflake): Promise<any> => {
             where: {
                 id: userID
             }
-        }).then((presence) => resolve(presence));
+        }).then((presence) => resolve(presence?.lastSeenAt));
     });
 };
 
