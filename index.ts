@@ -25,6 +25,7 @@ import { formatMessageActivityLeaderboard, formatScoreLeaderboard, formatVoiceAc
 import PayPal from 'paypal-api';
 import humanizeDuration from 'humanize-duration';
 import { getUsers, updateUser } from './sequelize-user';
+import { updateUserLastSeenAt } from './sequelize-presence';
 import chalk from 'chalk';
 
 const client = new Client({
@@ -347,7 +348,6 @@ client.on('messageReactionAdd', async (reaction, user) => {
         ...e,
         username: channel.guild.members.cache.get(e.user_id)?.user.username
     }));
-    console.log(staffLeaderboardEntries);
     const content = getStaffLeaderboardContent();
     staffLeaderboardMessage?.edit(content);
 
@@ -356,6 +356,11 @@ client.on('messageReactionAdd', async (reaction, user) => {
 client.on('voiceStateUpdate', async (oldState, newState) => {
 
     if (!newState.member) return;
+
+    if (newState.channelID === process.env.UNMUTE_CHANNEL_ID) {
+        newState.member.voice.setMute(false);
+        return;
+    }
 
     // if someone joined a channel
     if (!oldState.channelID && newState.channelID) {
@@ -390,6 +395,14 @@ client.on('channelDelete', async (channel) => {
     }
 
     (client.channels.cache.get(process.env.HOST_LOGS_CHANNEL!)! as TextChannel).send(embed);
+
+});
+
+client.on('presenceUpdate', async (oldPresence, newPresence) => {
+
+    if (oldPresence?.status === 'offline' && newPresence.status !== oldPresence.status) {
+        updateUserLastSeenAt(newPresence.userID);
+    }
 
 });
 
