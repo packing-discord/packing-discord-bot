@@ -40,12 +40,24 @@ export const getUserLastSeenAt = (userID: Snowflake): Promise<any> => {
 
 export const updateUserLastSeenAt = (userID: Snowflake): Promise<void> => {
     return new Promise((resolve) => {
-        UserPresence.update({
-            lastSeenAt: new Date()
-        }, {
+        UserPresence.findOne({
             where: {
                 id: userID
             }
-        }).then(() => resolve());
+        }).then((presence) => {
+            if (presence) {
+                UserPresence.update({
+                    lastSeenAt: new Date()
+                }, {
+                    where: {
+                        id: userID
+                    }
+                }).then(() => resolve());
+            } else {
+                UserPresence.create({
+                    lastSeenAt: new Date(),
+                    id: userID
+                }).then(() => resolve());
+            }
     });
 };
