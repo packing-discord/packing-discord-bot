@@ -18,7 +18,7 @@ import {
     deleteUnusedLeaderboardEntries,
     assignVote
 } from './db';
-import { Client, MessageEmbed, TextChannel, VoiceChannel, WSEventType, CategoryChannel, Message, Snowflake, GuildMember } from 'discord.js';
+import { Client, MessageEmbed, TextChannel, VoiceChannel, WSEventType, CategoryChannel, Message, Snowflake, GuildMember, Intents } from 'discord.js';
 import { SlashCreator, GatewayServer } from 'slash-create';
 import { join } from 'path';
 import { formatMessageActivityLeaderboard, formatScoreLeaderboard, formatVoiceActivityLeaderboard } from './leaderboards';
@@ -29,7 +29,7 @@ import { updateUserLastSeenAt } from './sequelize-presence';
 import chalk from 'chalk';
 
 const client = new Client({
-    fetchAllMembers: true,
+    intents: [Intents.FLAGS.DIRECT_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_PRESENCES],
     partials:  ['MESSAGE', 'CHANNEL', 'REACTION', 'GUILD_MEMBER']
 });
 
@@ -59,7 +59,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
         const newEmbed = embed;
         embed.fields = embed.fields.filter((f) => f.name !== 'Status');
         embed.addField('Status', 'Completed ✅');
-        reaction.message.edit(newEmbed);
+        reaction.message.edit({ embeds: [newEmbed] });
 
         markExpenditurePaid(transactionID)
     }
@@ -110,10 +110,10 @@ const updateActivityLeaderboard = async () => {
         .setFooter(messageEmbedFooter)
         .setColor('#FF0000');
 
-    if (!voiceActivityEmbed) activityLeaderboardChannel.send(newVoiceEmbed);
-    else voiceActivityEmbed.edit({ embed: newVoiceEmbed });
-    if (!messageActivityEmbed) activityLeaderboardChannel.send(newMessageEmbed);
-    else messageActivityEmbed.edit({ embed: newMessageEmbed });
+    if (!voiceActivityEmbed) activityLeaderboardChannel.send({ embeds: [newVoiceEmbed] });
+    else voiceActivityEmbed.edit({ embeds: [newVoiceEmbed] });
+    if (!messageActivityEmbed) activityLeaderboardChannel.send({ embeds: [newMessageEmbed] });
+    else messageActivityEmbed.edit({ embeds: [newMessageEmbed] });
 
 };
 
@@ -131,8 +131,8 @@ export const updateWinsLeaderboard = async () => {
         .setFooter(scoreEmbedFooter)
         .setColor('#FF0000');
 
-    if (!scoreEmbed) scoreLeaderboardChannel.send(newScoreEmbed);
-    else scoreEmbed.edit({ embed: newScoreEmbed });
+    if (!scoreEmbed) scoreLeaderboardChannel.send({ embeds: [newScoreEmbed] });
+    else scoreEmbed.edit({ embeds: [newScoreEmbed] });
 };
 
 const emptyChannels = new Set();
@@ -219,7 +219,7 @@ const synchronizeStaffLeaderboard = async () => {
 
     const staffLeaderboardEntriesDB = await getStaffLeaderboardEntries();
     staffLeaderboardEntries = [];
-    const staff = guild?.members.cache.filter(m => m.roles.cache.has(process.env.STAFF_ROLE!)).array()!;
+    const staff = guild?.members.cache.filter(m => m.roles.cache.has(process.env.STAFF_ROLE!)).toJSON()!;
     for (let staffMember of staff) {
         // check if there is an entry, and if there is not create, it
         const entry = staffLeaderboardEntriesDB.find((entry) => entry.user_id === staffMember.id);
@@ -300,7 +300,7 @@ const checkAutoRole = async () => {
     }
 
     server?.members.cache.forEach((member) => {
-        const hasStatusPresence = member.user.presence.activities[0]?.state?.includes('.gg/packing');
+        const hasStatusPresence = member.presence?.activities[0]?.state?.includes('.gg/packing');
         const hasStatusRole = member.roles.cache.has(statusRole.id);
 
         if (hasStatusPresence && !hasStatusRole) {
@@ -314,7 +314,7 @@ const checkAutoRole = async () => {
 client.on('ready', () => {
     console.log(`Ready. Logged in as ${client.user?.username}`);
     terminateVoiceActivities();
-    client.channels.cache.filter((channel) => channel.type === 'voice').forEach((channel) => {
+    client.channels.cache.filter((channel) => channel.type === 'GUILD_VOICE').forEach((channel) => {
         (channel as VoiceChannel).members.forEach((member) => {
             startVoiceActivity(member.user.id, channel.id);
         });
@@ -357,19 +357,19 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
     if (!newState.member) return;
 
-    if (newState.channelID === process.env.UNMUTE_CHANNEL_ID) {
+    if (newState.channelId === process.env.UNMUTE_CHANNEL_ID) {
         newState.member.voice.setMute(false);
         return;
     }
 
     // if someone joined a channel
-    if (!oldState.channelID && newState.channelID) {
-        startVoiceActivity(newState.member.id, newState.channelID);
+    if (!oldState.channelId && newState.channelId) {
+        startVoiceActivity(newState.member.id, newState.channelId);
         console.log(`[+] New voice activity created for user ${newState.member.user.username}`);
     }
 
     // if someone left a channel
-    else if (oldState.channelID && !newState.channelID) {
+    else if (oldState.channelId && !newState.channelId) {
         endVoiceActivity(newState.member.id);
         console.log(`[x] Voice activity ended for user ${newState.member.user.username}`);
     }
@@ -378,9 +378,9 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
 client.on('channelDelete', async (channel) => {
 
-    if (channel.type !== 'voice') return;
+    if (channel.type !== 'GUILD_VOICE') return;
     const voice = channel as VoiceChannel;
-    if (voice.parentID !== process.env.HOST_CHANNELS_CATEGORY) return;
+    if (voice.parentId !== process.env.HOST_CHANNELS_CATEGORY) return;
 
     const userID = await getVoiceChannelAuthor(channel.id);
     const eventDuration = humanizeDuration(Date.now() - channel.createdTimestamp);
@@ -394,15 +394,15 @@ client.on('channelDelete', async (channel) => {
         embed.setAuthor(`End of event channel created by Unknown#0000`);
     }
 
-    (client.channels.cache.get(process.env.HOST_LOGS_CHANNEL!)! as TextChannel).send(embed);
+    (client.channels.cache.get(process.env.HOST_LOGS_CHANNEL!)! as TextChannel).send({ embeds: [embed] });
 
 });
 
 client.on('presenceUpdate', async (oldPresence, newPresence) => {
 
     if (oldPresence?.status !== 'offline' && newPresence.status === 'offline') {
-        console.log(`${newPresence.user?.tag} (${newPresence.userID} moved from ${oldPresence?.status} to ${newPresence.status}`);
-        updateUserLastSeenAt(newPresence.userID);
+        console.log(`${newPresence.user?.tag} (${newPresence.userId} moved from ${oldPresence?.status} to ${newPresence.status}`);
+        updateUserLastSeenAt(newPresence.userId);
     }
 
 });

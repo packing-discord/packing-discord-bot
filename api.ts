@@ -106,13 +106,13 @@ app.post('/buy', jwt({ secret: process.env.PRIVATE_KEY! as string, algorithms: [
         .addField('Transaction ID', transactionID)
         .addField('User ID', userID)
         .addField('User email', emailAddress)
-        .addField('User points', score.points)
-        .addField('Product price', product?.paypal)
-        .addField('Points paid by the user', product.points)
+        .addField('User points', score.points.toString())
+        .addField('Product price', product?.paypal.toString())
+        .addField('Points paid by the user', product.points.toString())
         .addField('Creation Date', paymentDate)
         .addField('Status', 'Processing... (react to approve)')
         .setColor('RED');
-    (client.channels.cache.get(process.env.TRANSACTION_CHANNEL!)! as TextChannel).send(embed).then((m) => {
+    (client.channels.cache.get(process.env.TRANSACTION_CHANNEL!)! as TextChannel).send({ embeds: [embed] }).then((m) => {
         m.react('✅');
     });
 

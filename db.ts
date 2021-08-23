@@ -175,7 +175,7 @@ export const fetchUserScore = async (userID: string) => {
     };
 };
 
-export const buyProduct = async (userID: string, productID: number, createdAt: string, numberOfPoints: number, emailAddress: string): Promise<boolean> => {
+export const buyProduct = async (userID: string, productID: number, createdAt: string, numberOfPoints: number, emailAddress: string): Promise<string|null> => {
     return new Promise((resolve) => {
         console.log(userID)
         pool.query(`
@@ -187,7 +187,7 @@ export const buyProduct = async (userID: string, productID: number, createdAt: s
             resolve(rows[0].id);
         }).catch((e) => {
             console.log(e);
-            resolve(false);
+            resolve(null);
         });
     });
 };

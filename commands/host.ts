@@ -34,7 +34,7 @@ export default class HostCommand extends SlashCommand {
 
         const server = client.guilds.cache.get(process.env.GUILD_ID!);
         server?.channels.create(ctx.options.name as string, {
-            type: 'voice',
+            type: 'GUILD_VOICE',
             permissionOverwrites: [
                 {
                     id: ctx.guildID!,
@@ -55,7 +55,7 @@ export default class HostCommand extends SlashCommand {
                 .setDescription(`The event (${channel.name}) has started`)
                 .setColor('#00FF00');
 
-            (client.channels.cache.get(process.env.HOST_LOGS_CHANNEL!)! as TextChannel).send(embed);
+            (client.channels.cache.get(process.env.HOST_LOGS_CHANNEL!)! as TextChannel).send({ embeds: [embed]});
 
             channel.createInvite().then((invite) => {
                 ctx.editOriginal(`:white_check_mark: Your channel ${ctx.options.name as string} has been created. Click the invite to join it! ${invite.url}`);

@@ -1,5 +1,5 @@
 import { Snowflake, MessageEmbed } from 'discord.js';
-import { CommandContext, SlashCommand, SlashCreator } from 'slash-create';
+import { CommandContext, MessageEmbedOptions, SlashCommand, SlashCreator } from 'slash-create';
 import client from '../';
 import { getUser } from '../sequelize-user';
 import jobs from '../assets/jobs.json';
@@ -65,9 +65,7 @@ export default class StatsCommand extends SlashCommand {
             .setColor('RED');
 
         ctx.send(`<@${ctx.member!.id}>, here are ${tag}'s stats!`, {
-            embeds: [
-                embed.toJSON()
-            ]
+            embeds: [embed.toJSON() as MessageEmbedOptions]
         });
     }
 };
