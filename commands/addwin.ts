@@ -1,7 +1,8 @@
 import { Snowflake } from 'discord.js';
-import { addScoreEvent } from '../db';
+import { addScoreEvent, fetchUserScore } from '../db';
 import { CommandContext, SlashCommand, SlashCreator } from 'slash-create'
 import client, { updateWinsLeaderboard } from '../';
+import applyRanks from '../apply-ranks';
 
 export default class extends SlashCommand {
     constructor(creator: SlashCreator) {
@@ -35,5 +36,8 @@ export default class extends SlashCommand {
         ctx.send('Win added successfully!');
         await addScoreEvent(userID, ctx.member.id, new Date(), 'win');
         updateWinsLeaderboard();
+
+        const score = await fetchUserScore(ctx.user.id);
+        applyRanks(score.points, member);
     }
 }
