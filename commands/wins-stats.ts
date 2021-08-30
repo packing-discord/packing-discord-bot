@@ -34,6 +34,6 @@ export default class extends SlashCommand {
         const member = client.guilds.cache.get(ctx.guildID)!.members.cache.get(userID) ?? await client.guilds.cache.get(ctx.guildID)!.members.fetch(userID).catch(() => {});
         const score = await fetchUserScore(userID);
         applyRanks(score.points, member as GuildMember);
-        ctx.send(`${user} has **${score.wins}** wins and **${score.losses}** losses, for a score of **${score.points}**!`);
+        ctx.send(`${user} has **${score.wins}** wins and **${score.losses}** losses, for a score of **${score.wins - score.losses}**!`);
     }
 }
