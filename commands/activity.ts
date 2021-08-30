@@ -31,7 +31,7 @@ export default class extends SlashCommand {
         const embed = new MessageEmbed()
         .setAuthor(`Activity of ${member.user.tag}`, member.user.displayAvatarURL())
         .setDescription(
-            lastSeenAt ? `${member.user.username} was seen ${moment(lastSeenAt).fromNow()}`
+            lastSeenAt ? `${member.user.username} was seen <t:${Math.round(lastSeenAt.getTime()/1000)}:R>`
                         : `${member.user.username} has not been seen for a while`
         )
         .setColor('RED');

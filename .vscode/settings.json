@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "139.99.171.130",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "thizz",
+            "database": "packing_seq",
+            "username": "debian",
+            "password": "mile1###"
+        }
+    ]
+}
