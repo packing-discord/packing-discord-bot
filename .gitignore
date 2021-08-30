@@ -8,4 +8,4 @@ node_modules
 dist
 
 # vscode
-.vscode/settings
+.vscode/settings.json
