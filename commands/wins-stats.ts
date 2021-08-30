@@ -1,7 +1,8 @@
 import { Snowflake } from 'discord.js';
-import { fetchUserScoreEvents } from '../db';
+import { fetchUserScore, fetchUserScoreEvents } from '../db';
 import { CommandContext, SlashCommand, SlashCreator } from 'slash-create'
 import client from '..';
+import applyRanks from '../apply-ranks';
 
 export default class extends SlashCommand {
     constructor(creator: SlashCreator) {
@@ -30,10 +31,9 @@ export default class extends SlashCommand {
             });
             return;
         }
-        fetchUserScoreEvents(userID).then((events) => {
-            const wins = events.filter((event) => (event as Record<string, string>).event_type === 'win').length;
-            const losses = events.filter((event) => (event as Record<string, string>).event_type === 'loss').length;
-            ctx.send(`${user} has **${wins}** wins and **${losses}** losses!`);
-        });
+        const member = client.guilds.cache.get(ctx.guildID)!.members.cache.get(userID) ?? await client.guilds.cache.get(ctx.guildID)!.members.fetch(userID).catch(() => {});
+        const score = await fetchUserScore(ctx.user.id);
+        applyRanks(score.points, member!);
+        ctx.send(`${user} has **${score.wins}** wins and **${score.losses}** losses, for a score of **${score.points}**!`);
     }
 }
