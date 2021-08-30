@@ -8,9 +8,9 @@ export default async (score: number, member: GuildMember) => {
         // If the guild doesn't contain the rank anymore
         if (!member.guild.roles.cache.has(rank.roleID)) continue;
         // If the member can't obtain the rank
-        if (score < rank.scoreCount && !rank.keepRank) {
+        if (score < rank.scoreCount) {
             // If the member doesn't have the rank
-            if (!member.roles.cache.has(rank.roleID)) continue;
+            if (!member.roles.cache.has(rank.roleID) || rank.keepRank) continue;
             // Remove the ranks
             await member.roles.remove(rank.roleID);
         } else {
