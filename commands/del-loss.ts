@@ -33,7 +33,7 @@ export default class extends SlashCommand {
             });
             return;
         };
-        ctx.send('Win added successfully!');
+        ctx.send('Loss deleted successfully!');
         await removeScoreEvent(userID, 'loss');
         updateWinsLeaderboard();
 
