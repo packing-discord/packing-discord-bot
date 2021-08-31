@@ -113,16 +113,14 @@ export const addScoreEvent = async (userID: Snowflake, modUserID: Snowflake, eve
 
 export const removeScoreEvent = async (userID: Snowflake, eventType: ScoreEventType): Promise<void> => {
     await pool.query(`
-        WITH data AS
-            (
-                SELECT *
-                FROM users_scores_events
-                WHERE user_id = $1
-                AND event_type = $2
-                ORDER by event_date DESC
-                LIMIT 1
-            )
-        DELETE FROM data
+        DELETE FROM users_scores_events WHERE id in (
+            SELECT id
+            FROM users_scores_events
+            WHERE user_id = $1
+            AND event_type = $2
+            ORDER by event_date DESC
+            LIMIT 1
+        )
     `, [userID, eventType]);
 };
 
